@@ -42,12 +42,15 @@ WORKDIR /var/www
 
 COPY . .
 
-COPY --from=assets /app/public/build ./public/build
+COPY --from=assets /app/public/build /var/www/public/build
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 RUN mkdir -p database public/imagenes storage bootstrap/cache \
     && touch database/database.sqlite \
-    && chmod -R 777 database public/imagenes storage bootstrap/cache
+    && chmod -R 777 database public/imagenes storage bootstrap/cache \
+    && chmod -R 777 public/build
 
-CMD php artisan config:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+RUN php artisan config:clear && php artisan view:clear && php artisan route:clear
+
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
