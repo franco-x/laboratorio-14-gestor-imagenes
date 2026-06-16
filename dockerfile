@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN rm -f public/hot
 RUN npm run build
 
 
@@ -42,15 +43,16 @@ WORKDIR /var/www
 
 COPY . .
 
+RUN rm -f public/hot
+
 COPY --from=assets /app/public/build /var/www/public/build
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 RUN mkdir -p database public/imagenes storage bootstrap/cache \
     && touch database/database.sqlite \
-    && chmod -R 777 database public/imagenes storage bootstrap/cache \
-    && chmod -R 777 public/build
+    && chmod -R 777 database public/imagenes storage bootstrap/cache public/build
 
-RUN php artisan config:clear && php artisan view:clear && php artisan route:clear
+RUN test -f public/build/manifest.json
 
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+CMD php artisan config:clear && php artisan view:clear && php artisan route:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
