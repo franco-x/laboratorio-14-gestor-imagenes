@@ -1,11 +1,20 @@
-FROM php:8.3-cli
+FROM node:22 AS assets
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+
+FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     curl \
-    nodejs \
-    npm \
     libzip-dev \
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -33,9 +42,9 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+COPY --from=assets /app/public/build ./public/build
 
-RUN npm install && npm run build
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 RUN mkdir -p database public/imagenes storage bootstrap/cache \
     && touch database/database.sqlite \
